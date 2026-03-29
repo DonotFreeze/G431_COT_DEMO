@@ -18,14 +18,10 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "adc.h"
 #include "comp.h"
 #include "dac.h"
-#include "dma.h"
-#include "fdcan.h"
 #include "opamp.h"
 #include "tim.h"
-#include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -94,23 +90,17 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_DMA_Init();
-  MX_ADC1_Init();
-  MX_ADC2_Init();
-  MX_FDCAN1_Init();
   MX_TIM1_Init();
   MX_OPAMP1_Init();
   MX_OPAMP2_Init();
   MX_OPAMP3_Init();
-  MX_USART1_UART_Init();
   MX_COMP1_Init();
   MX_DAC3_Init();
   MX_TIM2_Init();
-  MX_TIM15_Init();
   MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
   
-  //�˷���У׼
+  //运放自校�?
   HAL_OPAMP_SelfCalibrate(&hopamp1);
   HAL_Delay(1);
 
@@ -121,22 +111,28 @@ int main(void)
   HAL_Delay(1);
 
   
-  //�����˷�
+  //启动运放
   HAL_OPAMP_Start(&hopamp1);
   HAL_OPAMP_Start(&hopamp2);
   HAL_OPAMP_Start(&hopamp3);
 
-  HAL_DAC_SetValue(&hdac3, DAC_CHANNEL_1, DAC_ALIGN_12B_R, 1000); //����DAC���ֵΪ�м�ֵ
-  HAL_DAC_Start(&hdac3, DAC_CHANNEL_1); //����DAC
+  HAL_DAC_SetValue(&hdac3, DAC_CHANNEL_1, DAC_ALIGN_12B_R, 1000); //设置DAC输出。
+  //这个DAC输出值与输出电压的关系大概是100：1，1000就差不多10V了
+  //目前这个DAC值不能随便改，因为他和上管on time以及开关频率有关。
+  HAL_DAC_Start(&hdac3, DAC_CHANNEL_1); //启动DAC
 
-  HAL_COMP_Start(&hcomp1); //�����Ƚ���
+  HAL_COMP_Start(&hcomp1); //启动比较器
 
-  // HAL_TIM_Base_Start(&htim1); //������ʱ��1
+  HAL_TIM_Base_Start(&htim1); //启动定时器
+
+  //这个是与TIM1上管PWM同步的测试输出。
   HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_4);
-  //����PWM�Ķ�ʱ������
+
+  //半桥PWM的定时器启动
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
   HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
-  HAL_TIM_PWM_Start(&htim2,TIM_CHANNEL_1);
+
+  //这个是上电启动用的定时器触发源，当比较器被稳定触发后，这个就没用了
   HAL_TIM_Base_Start(&htim2);
 
   /* USER CODE END 2 */
@@ -145,10 +141,6 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    
-    // HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_4);
-    // HAL_TIM_OnePulse_Start(&htim2, TIM_CHANNEL_3);
-    // HAL_TIM_PWM_Start(&htim2,TIM_CHANNEL_3);
     LED_BLUE_BLINK;
     HAL_Delay(300);
     /* USER CODE END WHILE */
@@ -206,34 +198,23 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 uint8_t a=0;
 void HAL_COMP_TriggerCallback(COMP_HandleTypeDef *hcomp){
+  //比较器中�?
   
   if(a <= 100){
 
     a++;
     if(a==100){
-
-    // TIM_SlaveConfigTypeDef sSlaveConfig = {0};
-    // sSlaveConfig.SlaveMode = TIM_SLAVEMODE_TRIGGER;
-    // sSlaveConfig.InputTrigger = TIM_TS_ETRF;
-    // sSlaveConfig.TriggerPolarity = TIM_TRIGGERPOLARITY_NONINVERTED;
-    // sSlaveConfig.TriggerPrescaler = TIM_TRIGGERPRESCALER_DIV1;
-    // sSlaveConfig.TriggerFilter = 0;
-    // if (HAL_TIM_SlaveConfigSynchro(&htim1, &sSlaveConfig) != HAL_OK)
-    // {
-    //   Error_Handler();
-    // }
-
-    
-    // if (HAL_TIM_SlaveConfigSynchro(&htim2, &sSlaveConfig) != HAL_OK)
-    // {
-    //   Error_Handler();
-    // }
-
-    // sSlaveConfig.SlaveMode = TIM_SLAVEMODE_TRIGGER;
-    // sSlaveConfig.InputTrigger = TIM_TS_ETRF;
-    // sSlaveConfig.TriggerPolarity = TIM_TRIGGERPOLARITY_NONINVERTED;
-    // sSlaveConfig.TriggerPrescaler = TIM_TRIGGERPRESCALER_DIV1;
-    // sSlaveConfig.TriggerFilter = 0;
+      //比较器稳定触发后，把TIM1的触发源改为比较器输出，这样就是真正的COT了
+    TIM_SlaveConfigTypeDef sSlaveConfig = {0};
+    sSlaveConfig.SlaveMode = TIM_SLAVEMODE_TRIGGER;
+    sSlaveConfig.InputTrigger = TIM_TS_ETRF;
+    sSlaveConfig.TriggerPolarity = TIM_TRIGGERPOLARITY_INVERTED;
+    sSlaveConfig.TriggerPrescaler = TIM_TRIGGERPRESCALER_DIV1;
+    sSlaveConfig.TriggerFilter = 0;
+    if (HAL_TIM_SlaveConfigSynchro(&htim1, &sSlaveConfig) != HAL_OK)
+    {
+      Error_Handler();
+    }
 
     LED_GREEN_ON;
       

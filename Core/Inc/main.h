@@ -63,26 +63,10 @@ void Error_Handler(void);
 #define LED_GREEN_GPIO_Port GPIOC
 #define LED_RED_Pin GPIO_PIN_15
 #define LED_RED_GPIO_Port GPIOC
-#define I_MOS_Pin GPIO_PIN_0
-#define I_MOS_GPIO_Port GPIOA
-#define I_BAT_Pin GPIO_PIN_1
-#define I_BAT_GPIO_Port GPIOA
 #define REF1V65_OUT_Pin GPIO_PIN_2
 #define REF1V65_OUT_GPIO_Port GPIOA
 #define REF1V65_IN_Pin GPIO_PIN_3
 #define REF1V65_IN_GPIO_Port GPIOA
-#define V_BAT_Pin GPIO_PIN_4
-#define V_BAT_GPIO_Port GPIOA
-#define VCAP_Pin GPIO_PIN_2
-#define VCAP_GPIO_Port GPIOB
-#define TEMP_MOS_Pin GPIO_PIN_11
-#define TEMP_MOS_GPIO_Port GPIOB
-#define BOOM_IN_Pin GPIO_PIN_13
-#define BOOM_IN_GPIO_Port GPIOB
-#define TEMP_CAP_Pin GPIO_PIN_15
-#define TEMP_CAP_GPIO_Port GPIOB
-#define ENABLE_CAP_Pin GPIO_PIN_5
-#define ENABLE_CAP_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 
